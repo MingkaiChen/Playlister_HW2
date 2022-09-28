@@ -7,9 +7,11 @@ import jsTPS from './common/jsTPS.js';
 
 // OUR TRANSACTIONS
 import MoveSong_Transaction from './transactions/MoveSong_Transaction.js';
+import EditSong_Transaction from './transactions/EditSong_Transaction.js';
 
 // THESE REACT COMPONENTS ARE MODALS
 import DeleteListModal from './components/DeleteListModal.js';
+import EditSongModal from './components/EditSongModal.js';
 
 // THESE REACT COMPONENTS ARE IN OUR UI
 import Banner from './components/Banner.js';
@@ -77,7 +79,8 @@ class App extends React.Component {
                 nextKey: prevState.sessionData.nextKey + 1,
                 counter: prevState.sessionData.counter + 1,
                 keyNamePairs: updatedPairs
-            }
+            },
+            selectedSongIndex: null
         }), () => {
             // PUTTING THIS NEW LIST IN PERMANENT STORAGE
             // IS AN AFTER EFFECT
@@ -230,11 +233,29 @@ class App extends React.Component {
         }
         this.setStateWithUpdatedList(list);
     }
+
+    editSong = (index, newSong) => {
+        this.state.currentList.songs[index] = newSong;
+        this.setStateWithUpdatedList(this.state.currentList);
+    }
+
     // THIS FUNCTION ADDS A MoveSong_Transaction TO THE TRANSACTION STACK
     addMoveSongTransaction = (start, end) => {
         let transaction = new MoveSong_Transaction(this, start, end);
         this.tps.addTransaction(transaction);
     }
+
+    addEditSongTransaction = (index, songTitle, songArtist, songYouTubeId) => {
+        if(songTitle === '' && songArtist === '' && songYouTubeId === '') {
+            this.hideEditSongModal();
+            return;
+        }
+        let originalSong = this.state.currentList.songs[index];
+        let editedSong = {title: songTitle, artist: songArtist, youTubeId: songYouTubeId};
+        let transaction = new EditSong_Transaction(this, index, originalSong, editedSong);
+        this.tps.addTransaction(transaction);
+        this.hideEditSongModal();
+      };
     // THIS FUNCTION BEGINS THE PROCESS OF PERFORMING AN UNDO
     undo = () => {
         if (this.tps.hasTransactionToUndo()) {
@@ -274,6 +295,26 @@ class App extends React.Component {
         let modal = document.getElementById("delete-list-modal");
         modal.classList.remove("is-visible");
     }
+
+    showEditSongModal(index) {
+        let modal = document.getElementById("edit-song-modal");
+        modal.classList.add("is-visible");
+        let songTitle = document.getElementById("song-title");
+        let songArtist = document.getElementById("song-artist");
+        let songYouTubeId = document.getElementById("song-youTubeId");
+        songTitle.value = this.state.currentList.songs[index].title;
+        songArtist.value = this.state.currentList.songs[index].artist;
+        songYouTubeId.value = this.state.currentList.songs[index].youTubeId;
+        this.setState({
+            selectedSongIndex: index,
+        });
+    }
+
+    hideEditSongModal() {
+        let modal = document.getElementById("edit-song-modal");
+        modal.classList.remove("is-visible");
+    }
+
     render() {
         let canAddSong = this.state.currentList !== null;
         let canUndo = this.tps.hasTransactionToUndo();
@@ -303,13 +344,20 @@ class App extends React.Component {
                 />
                 <PlaylistCards
                     currentList={this.state.currentList}
-                    moveSongCallback={this.addMoveSongTransaction} />
+                    moveSongCallback={this.addMoveSongTransaction} 
+                    editSongCallback={this.showEditSongModal.bind(this)}/>
                 <Statusbar 
                     currentList={this.state.currentList} />
                 <DeleteListModal
                     listKeyPair={this.state.listKeyPairMarkedForDeletion}
                     hideDeleteListModalCallback={this.hideDeleteListModal}
                     deleteListCallback={this.deleteMarkedList}
+                />
+                <EditSongModal 
+                    currentList={this.state.currentList}
+                    selectedSongIndex={this.state.selectedSongIndex}
+                    cancelCallback={this.hideEditSongModal}
+                    confirmCallback={this.addEditSongTransaction}
                 />
             </div>
         );
