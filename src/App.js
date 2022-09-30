@@ -92,7 +92,7 @@ class App extends React.Component {
             // SO IS STORING OUR SESSION DATA
             this.db.mutationUpdateSessionData(this.state.sessionData);
         });
-    }
+    };
     // THIS FUNCTION BEGINS THE PROCESS OF DELETING A LIST.
     deleteList = (key) => {
         // IF IT IS THE CURRENT LIST, CHANGE THAT
@@ -129,17 +129,17 @@ class App extends React.Component {
             // SO IS STORING OUR SESSION DATA
             this.db.mutationUpdateSessionData(this.state.sessionData);
         });
-    }
+    };
     deleteMarkedList = () => {
         this.deleteList(this.state.listKeyPairMarkedForDeletion.key);
         this.hideDeleteListModal();
-    }
+    };
     // THIS FUNCTION SPECIFICALLY DELETES THE CURRENT LIST
     deleteCurrentList = () => {
         if (this.state.currentList) {
             this.deleteList(this.state.currentList.key);
         }
-    }
+    };
     renameList = (key, newName) => {
         let newKeyNamePairs = [...this.state.sessionData.keyNamePairs];
         // NOW GO THROUGH THE ARRAY AND FIND THE ONE TO RENAME
@@ -172,7 +172,7 @@ class App extends React.Component {
             this.db.mutationUpdateList(list);
             this.db.mutationUpdateSessionData(this.state.sessionData);
         });
-    }
+    };
     // THIS FUNCTION BEGINS THE PROCESS OF LOADING A LIST FOR EDITING
     loadList = (key) => {
         let newCurrentList = this.db.queryGetList(key);
@@ -185,7 +185,7 @@ class App extends React.Component {
             // THE TRANSACTION STACK IS CLEARED
             this.tps.clearAllTransactions();
         });
-    }
+    };
     // THIS FUNCTION BEGINS THE PROCESS OF CLOSING THE CURRENT LIST
     closeCurrentList = () => {
         this.setState(prevState => ({
@@ -197,7 +197,7 @@ class App extends React.Component {
             // THE TRANSACTION STACK IS CLEARED
             this.tps.clearAllTransactions();
         });
-    }
+    };
     setStateWithUpdatedList(list) {
         this.setState(prevState => ({
             listKeyPairMarkedForDeletion : prevState.listKeyPairMarkedForDeletion,
@@ -208,10 +208,10 @@ class App extends React.Component {
             // IS AN AFTER EFFECT
             this.db.mutationUpdateList(this.state.currentList);
         });
-    }
+    };
     getPlaylistSize = () => {
         return this.state.currentList.songs.length;
-    }
+    };
     // THIS FUNCTION MOVES A SONG IN THE CURRENT LIST FROM
     // start TO end AND ADJUSTS ALL OTHER ITEMS ACCORDINGLY
     moveSong(start, end) {
@@ -235,33 +235,33 @@ class App extends React.Component {
             list.songs[end] = temp;
         }
         this.setStateWithUpdatedList(list);
-    }
+    };
 
     editSong = (index, newSong) => {
         this.state.currentList.songs[index] = newSong;
         this.setStateWithUpdatedList(this.state.currentList);
-    }
+    };
 
     addSong = (newSong) => {
         this.state.currentList.songs.push(newSong);
         this.setStateWithUpdatedList(this.state.currentList);
-    }
+    };
 
     removeSong = (index) => {
         this.state.currentList.songs.splice(index, 1);
         this.setStateWithUpdatedList(this.state.currentList);
-    }
+    };
 
     insertSong = (index, newSong) => {
         this.addSong(newSong);
         this.moveSong(this.getPlaylistSize(), index + 1);
-    }
+    };
 
     // THIS FUNCTION ADDS A MoveSong_Transaction TO THE TRANSACTION STACK
     addMoveSongTransaction = (start, end) => {
         let transaction = new MoveSong_Transaction(this, start, end);
         this.tps.addTransaction(transaction);
-    }
+    };
 
     addEditSongTransaction = (index, songTitle, songArtist, songYouTubeId) => {
         if(songTitle === '' && songArtist === '' && songYouTubeId === '') {
@@ -293,7 +293,7 @@ class App extends React.Component {
             // MAKE SURE THE LIST GETS PERMANENTLY UPDATED
             this.db.mutationUpdateList(this.state.currentList);
         }
-    }
+    };
     // THIS FUNCTION BEGINS THE PROCESS OF PERFORMING A REDO
     redo = () => {
         if (this.tps.hasTransactionToRedo()) {
@@ -302,7 +302,7 @@ class App extends React.Component {
             // MAKE SURE THE LIST GETS PERMANENTLY UPDATED
             this.db.mutationUpdateList(this.state.currentList);
         }
-    }
+    };
     markListForDeletion = (keyPair) => {
         this.setState(prevState => ({
             currentList: prevState.currentList,
@@ -312,30 +312,30 @@ class App extends React.Component {
             // PROMPT THE USER
             this.showDeleteListModal();
         });
-    }
+    };
     // THIS FUNCTION SHOWS THE MODAL FOR PROMPTING THE USER
     // TO SEE IF THEY REALLY WANT TO DELETE THE LIST
     showDeleteListModal() {
         let modal = document.getElementById("delete-list-modal");
         modal.classList.add("is-visible");
-    }
+    };
     // THIS FUNCTION IS FOR HIDING THE MODAL
     hideDeleteListModal() {
         let modal = document.getElementById("delete-list-modal");
         modal.classList.remove("is-visible");
-    }
+    };
 
     showRemoveSongModal(index) {
         let modal = document.getElementById("remove-song-modal");
         document.getElementById("remove-song-span").innerHTML = this.state.currentList.songs[index].title + " by " + this.state.currentList.songs[index].artist;
         modal.classList.add("is-visible");
         this.setState({selectedSongIndex: index});
-    }
+    };
 
     hideRemoveSongModal() {
         let modal = document.getElementById("remove-song-modal");
         modal.classList.remove("is-visible");
-    }
+    };
 
     showEditSongModal(index) {
         let modal = document.getElementById("edit-song-modal");
@@ -349,12 +349,35 @@ class App extends React.Component {
         this.setState({
             selectedSongIndex: index,
         });
-    }
+    };
 
     hideEditSongModal() {
         let modal = document.getElementById("edit-song-modal");
         modal.classList.remove("is-visible");
-    }
+    };
+
+    componentDidMount() {
+        document.addEventListener('keydown', this.handleKeyDown);
+    };
+    
+    componentWillUnmount() {
+        document.removeEventListener('keydown', this.handleKeyDown);
+    };
+
+    handleKeyDown = (event) => {
+        if (event.ctrlKey) {
+            if (event.keyCode === 90) {
+                if (this.tps.hasTransactionToUndo())
+                    this.undo();
+                event.preventDefault();
+            }
+            else if (event.keyCode === 89) {
+                if (this.tps.hasTransactionToRedo())
+                    this.redo();
+                event.preventDefault();
+            }
+        }
+    };
 
     render() {
         let canAddSong = this.state.currentList !== null;
