@@ -180,11 +180,8 @@ class App extends React.Component {
             listKeyPairMarkedForDeletion : prevState.listKeyPairMarkedForDeletion,
             currentList: newCurrentList,
             sessionData: this.state.sessionData
-        }), () => {
-            // AN AFTER EFFECT IS THAT WE NEED TO MAKE SURE
-            // THE TRANSACTION STACK IS CLEARED
-            this.tps.clearAllTransactions();
-        });
+        }));
+        this.tps.clearAllTransactions();
     };
     // THIS FUNCTION BEGINS THE PROCESS OF CLOSING THE CURRENT LIST
     closeCurrentList = () => {
@@ -196,6 +193,7 @@ class App extends React.Component {
             // AN AFTER EFFECT IS THAT WE NEED TO MAKE SURE
             // THE TRANSACTION STACK IS CLEARED
             this.tps.clearAllTransactions();
+            this.disableEditToolbar();
         });
     };
     setStateWithUpdatedList(list) {
@@ -318,11 +316,13 @@ class App extends React.Component {
     showDeleteListModal() {
         let modal = document.getElementById("delete-list-modal");
         modal.classList.add("is-visible");
+        this.disableEditToolbar();
     };
     // THIS FUNCTION IS FOR HIDING THE MODAL
     hideDeleteListModal() {
         let modal = document.getElementById("delete-list-modal");
         modal.classList.remove("is-visible");
+        this.resumeEditToolbar();
     };
 
     showRemoveSongModal(index) {
@@ -330,11 +330,13 @@ class App extends React.Component {
         document.getElementById("remove-song-span").innerHTML = this.state.currentList.songs[index].title + " by " + this.state.currentList.songs[index].artist;
         modal.classList.add("is-visible");
         this.setState({selectedSongIndex: index});
+        this.disableEditToolbar();
     };
 
     hideRemoveSongModal() {
         let modal = document.getElementById("remove-song-modal");
         modal.classList.remove("is-visible");
+        this.resumeEditToolbar();
     };
 
     showEditSongModal(index) {
@@ -349,11 +351,13 @@ class App extends React.Component {
         this.setState({
             selectedSongIndex: index,
         });
+        this.disableEditToolbar();
     };
 
     hideEditSongModal() {
         let modal = document.getElementById("edit-song-modal");
         modal.classList.remove("is-visible");
+        this.resumeEditToolbar();
     };
 
     componentDidMount() {
@@ -367,16 +371,30 @@ class App extends React.Component {
     handleKeyDown = (event) => {
         if (event.ctrlKey) {
             if (event.keyCode === 90) {
-                if (this.tps.hasTransactionToUndo())
+                if (!document.getElementById("undo-button").disabled)
                     this.undo();
                 event.preventDefault();
             }
             else if (event.keyCode === 89) {
-                if (this.tps.hasTransactionToRedo())
+                if (!document.getElementById("redo-button").disabled)
                     this.redo();
                 event.preventDefault();
             }
         }
+    };
+
+    disableEditToolbar = () => {
+        document.getElementById("undo-button").disabled = true;
+        document.getElementById("redo-button").disabled = true;
+        document.getElementById("add-song-button").disabled = true;
+        document.getElementById("close-button").disabled = true;
+    };
+    
+    resumeEditToolbar = () => {
+        document.getElementById("undo-button").disabled = !this.tps.hasTransactionToUndo();
+        document.getElementById("redo-button").disabled = !this.tps.hasTransactionToRedo();
+        document.getElementById("add-song-button").disabled = (this.state.currentList === null);
+        document.getElementById("close-button").disabled = (this.state.currentList === null);
     };
 
     render() {
@@ -388,6 +406,7 @@ class App extends React.Component {
             <div id="root">
                 <Banner />
                 <SidebarHeading
+                    canCreateNewList={this.state.currentList === null}
                     createNewListCallback={this.createNewList}
                 />
                 <SidebarList
@@ -423,14 +442,14 @@ class App extends React.Component {
                 <EditSongModal 
                     currentList={this.state.currentList}
                     selectedSongIndex={this.state.selectedSongIndex}
-                    cancelCallback={this.hideEditSongModal}
-                    confirmCallback={this.addEditSongTransaction}
+                    cancelCallback={this.hideEditSongModal.bind(this)}
+                    confirmCallback={this.addEditSongTransaction.bind(this)}
                 />
                 <RemoveSongModal 
                     currentList={this.state.currentList}
                     selectedSongIndex={this.state.selectedSongIndex}
-                    cancelCallback={this.hideRemoveSongModal}
-                    confirmCallback={this.addRemoveSongTransaction}
+                    cancelCallback={this.hideRemoveSongModal.bind(this)}
+                    confirmCallback={this.addRemoveSongTransaction.bind(this)}
                 />
             </div>
         );

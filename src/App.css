@@ -166,6 +166,13 @@ input {
   font-size:20pt;
 }
 
+/* .disabled {
+  background-color: lightgray;
+}
+
+.disabled:hover {
+  color: var(--swatch-neutral);
+} */
 
 /* THIS STYLE SHEET MANAGES STYLE FOR OUR MODAL, i.e. DIALOG BOX */
 
