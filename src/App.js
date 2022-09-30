@@ -8,10 +8,12 @@ import jsTPS from './common/jsTPS.js';
 // OUR TRANSACTIONS
 import MoveSong_Transaction from './transactions/MoveSong_Transaction.js';
 import EditSong_Transaction from './transactions/EditSong_Transaction.js';
+import RemoveSong_Transaction from './transactions/RemoveSong_Transaction.js';
 
 // THESE REACT COMPONENTS ARE MODALS
 import DeleteListModal from './components/DeleteListModal.js';
 import EditSongModal from './components/EditSongModal.js';
+import RemoveSongModal from './components/RemoveSongModal';
 
 // THESE REACT COMPONENTS ARE IN OUR UI
 import Banner from './components/Banner.js';
@@ -239,6 +241,21 @@ class App extends React.Component {
         this.setStateWithUpdatedList(this.state.currentList);
     }
 
+    addSong = (newSong) => {
+        this.state.currentList.songs.push(newSong);
+        this.setStateWithUpdatedList(this.state.currentList);
+    }
+
+    removeSong = (index) => {
+        this.state.currentList.songs.splice(index, 1);
+        this.setStateWithUpdatedList(this.state.currentList);
+    }
+
+    insertSong = (index, newSong) => {
+        this.addSong(newSong);
+        this.moveSong(this.getPlaylistSize(), index + 1);
+    }
+
     // THIS FUNCTION ADDS A MoveSong_Transaction TO THE TRANSACTION STACK
     addMoveSongTransaction = (start, end) => {
         let transaction = new MoveSong_Transaction(this, start, end);
@@ -256,6 +273,12 @@ class App extends React.Component {
         this.tps.addTransaction(transaction);
         this.hideEditSongModal();
       };
+
+    addRemoveSongTransaction = (index) => {
+        let transaction = new RemoveSong_Transaction(this, index, this.state.currentList.songs[index]);
+        this.tps.addTransaction(transaction);
+        this.hideRemoveSongModal();
+    };
     // THIS FUNCTION BEGINS THE PROCESS OF PERFORMING AN UNDO
     undo = () => {
         if (this.tps.hasTransactionToUndo()) {
@@ -293,6 +316,18 @@ class App extends React.Component {
     // THIS FUNCTION IS FOR HIDING THE MODAL
     hideDeleteListModal() {
         let modal = document.getElementById("delete-list-modal");
+        modal.classList.remove("is-visible");
+    }
+
+    showRemoveSongModal(index) {
+        let modal = document.getElementById("remove-song-modal");
+        document.getElementById("remove-song-span").innerHTML = this.state.currentList.songs[index].title + " by " + this.state.currentList.songs[index].artist;
+        modal.classList.add("is-visible");
+        this.setState({selectedSongIndex: index});
+    }
+
+    hideRemoveSongModal() {
+        let modal = document.getElementById("remove-song-modal");
         modal.classList.remove("is-visible");
     }
 
@@ -345,7 +380,9 @@ class App extends React.Component {
                 <PlaylistCards
                     currentList={this.state.currentList}
                     moveSongCallback={this.addMoveSongTransaction} 
-                    editSongCallback={this.showEditSongModal.bind(this)}/>
+                    editSongCallback={this.showEditSongModal.bind(this)}
+                    removeSongCallback={this.showRemoveSongModal.bind(this)}
+                />
                 <Statusbar 
                     currentList={this.state.currentList} />
                 <DeleteListModal
@@ -358,6 +395,12 @@ class App extends React.Component {
                     selectedSongIndex={this.state.selectedSongIndex}
                     cancelCallback={this.hideEditSongModal}
                     confirmCallback={this.addEditSongTransaction}
+                />
+                <RemoveSongModal 
+                    currentList={this.state.currentList}
+                    selectedSongIndex={this.state.selectedSongIndex}
+                    cancelCallback={this.hideRemoveSongModal}
+                    confirmCallback={this.addRemoveSongTransaction}
                 />
             </div>
         );

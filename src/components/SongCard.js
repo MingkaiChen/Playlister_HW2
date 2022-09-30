@@ -8,35 +8,35 @@ export default class SongCard extends React.Component {
             isDragging: false,
             draggedTo: false
         }
-    }
+    };
     handleDragStart = (event) => {
         event.dataTransfer.setData("song", event.target.id);
         this.setState(prevState => ({
             isDragging: true,
             draggedTo: prevState.draggedTo
         }));
-    }
+    };
     handleDragOver = (event) => {
         event.preventDefault();
         this.setState(prevState => ({
             isDragging: prevState.isDragging,
             draggedTo: true
         }));
-    }
+    };
     handleDragEnter = (event) => {
         event.preventDefault();
         this.setState(prevState => ({
             isDragging: prevState.isDragging,
             draggedTo: true
         }));
-    }
+    };
     handleDragLeave = (event) => {
         event.preventDefault();
         this.setState(prevState => ({
             isDragging: prevState.isDragging,
             draggedTo: false
         }));
-    }
+    };
     handleDrop = (event) => {
         event.preventDefault();
         let target = event.target;
@@ -52,16 +52,21 @@ export default class SongCard extends React.Component {
 
         // ASK THE MODEL TO MOVE THE DATA
         this.props.moveCallback(sourceId, targetId);
-    }
+    };
 
     getItemNum = () => {
         return this.props.id.substring("playlist-song-".length);
-    }
+    };
 
     handleDoubleClick = (event) => {
         event.preventDefault();
-        this.props.editSongCallback(parseInt(this.props.id.split('playlist-song-').pop()) - 1);
-    }
+        this.props.editSongCallback(this.props.index);
+    };
+
+    handleRemoveButton = (event) => {
+        event.preventDefault();
+        this.props.removeSongCallback(this.props.index);
+    };
 
     render() {
         const { song } = this.props;
@@ -82,7 +87,7 @@ export default class SongCard extends React.Component {
                 onDoubleClick={this.handleDoubleClick}
                 draggable="true"
             >
-                {num}. <a title = {song.title + ' by ' + song.artist} href = {'https://www.youtube.com/watch?v=' + song.youTubeId}> {song.title + ' by ' + song.artist} </a> <input type="button" class="list-card-button" id={'remove-song-button-' + num} value="✕"></input>
+                {num}. <a title = {song.title + ' by ' + song.artist} href = {'https://www.youtube.com/watch?v=' + song.youTubeId}> {song.title + ' by ' + song.artist} </a> <input type="button" class="list-card-button" id={'remove-song-button-' + num} value="✕" onClick={this.handleRemoveButton}></input>
             </div>
         )
     }
