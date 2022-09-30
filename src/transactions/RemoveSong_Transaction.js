@@ -1,8 +1,8 @@
 import jsTPS_Transaction from "../common/jsTPS.js"
 /**
- * EditSong_Transaction
+ * RemoveSong_Transaction
  * 
- * This class represents a transaction that edit song.
+ * This class represents a transaction that remove song.
  * It will be managed by the transaction stack.
  * 
  * @author Mingkai Chen
